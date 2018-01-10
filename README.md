@@ -7,8 +7,8 @@ At the origin, this script developped to backup and restore a Centreon databases
 An option allows to add a clause where to a specific table. This option added to limit backup size if table contains for example history datas.
 
 ## files
-|----|----|
 | Filename | Description |
+|----|----|
 | backup_mysql_tbl.php | General script to backup/restore |
 | backup_mysql_tbl.ini | Setting file for script |
 | backup_mysql_tbl.sh | General laucher script to backup few databases |
