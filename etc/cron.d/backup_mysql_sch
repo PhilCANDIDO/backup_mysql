@@ -1,0 +1,14 @@
+#########################################
+# Cron backup MySQL Server
+#########################################
+# 
+#########################################
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+# rewrite file with new cron line
+CRONTAB_EXEC_USER=""
+
+########################
+# Exec scrip backup_mysql_tbl.sh
+15 3 * * * root /opt/backup_mysql/backup_mysql_tbl.sh
