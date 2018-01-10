@@ -20,3 +20,4 @@ If you use MySQl Server :
 If you use mariadb Server :
 - MariaDB-client
 
+## Settings files
