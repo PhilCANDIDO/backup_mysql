@@ -34,18 +34,24 @@
 //#     - Display size archive when use argument -L 
 //#
 //###################################################
-//###################################################
 //# Version : 1.6
 //# Modify : Dec 30 2016
 //#     - Add option --lock-tables=0 in mysqldump options. This options allow to locks table in MySQL Replication architecture.
 //#
 //###################################################
+//# Version : 1.7
+//# Modify : Feb 26 2018
+//#     - Add option to save all databases.
+//#
+//###################################################
+
+
 
 //******************************************************************************
 //                              START MAIN PROGRAM
 //******************************************************************************
 
-$version="1.6";
+$version="1.7";
 // Create new Colors class
 $colors = new Colors();
 
@@ -78,7 +84,7 @@ $logfile=$current_fld . '/' . $short_script_name . '.log';
 
 //Get the command line argument
 $shortopts  = "";
-$shortopts  .= "b:"; 	//MySQL Schema Name. (MANDATORY)
+$shortopts  .= "b:"; 	//MySQL Schema Name.
 $shortopts  .= "i:"; 	//Configuratin file. (MANDATORY)
 $shortopts  .= "q"; 	//Query Options.
 $shortopts  .= "t::";	//Table name when -q option is used.
@@ -86,6 +92,7 @@ $shortopts  .= "w::";	//Clause where when -q option is used.
 $shortopts  .= "d";	//Debug mode.
 $shortopts  .= "s";	//SQL Debug mode.
 $shortopts  .= "h";     //Helpline.
+$shortopts  .= "A";     //Save all databases
 $shortopts  .= "R";     //Restore mode
 $shortopts  .= "H::";    //MySQL Hostname or Address IP
 $shortopts  .= "U::";    //MySQL User
@@ -110,8 +117,14 @@ if (isset($options['i'])) {
 if (isset($options['b'])) {
 	$mysql_sch = $options['b'];
 } else {
+    // Check if option alldatabases is set
+    if (isset($options['A'])) {
+        $sav_rest_ps = 'saveAllDB';
+        $mysql_sch = 'mysql';
+    } else {
 	echo $colors->getColoredString("CRITICAL: No MySQL Schema parameter. Script aborted. (see helpline $script_name -h)","red")."\n";
 	exit(2);
+    }
 }
 
 //Get clause WHERE option if exist.
@@ -294,6 +307,13 @@ if (is_dir($dest_fld)) {
 //** Save Or Restore processus
 //********************************************
 switch ($sav_rest_ps) {
+        case "saveAllDB":
+                //call save_process function
+                if (isset($debug)) {echo $colors->getColoredString("**Call list all databases function **","yellow")."\n";}
+                list_alldb();
+                //Send backup result to CENTREON
+                if ($cent_sts == 1) {nsca();}
+                break;
 	case "save":
         	//call save_process function
 		if (isset($debug)) {echo $colors->getColoredString("**Call save_process function **","yellow")."\n";}
@@ -327,7 +347,65 @@ exit(0);
 
 //******************************************************************************
 //                                              FUNCTIONS
-//******************************************************************************
+//*****************************************************************************
+
+//********************************************
+//               list_alldb
+//********************************************
+//
+// Purpose :
+//      - List all databases
+//
+//********************************************
+//
+// From :
+//      - Main program
+//
+//********************************************
+//
+// Input :
+//
+//
+//********************************************
+
+function list_alldb() {
+        // list variables
+        global $debug, $colors, $dest_fld, $fld_dest_tbl, $time_start, $message, $logfile;
+        global $mysql_host, $mysql_user, $mysql_pwd, $mysql_sch, $tbl_name;
+
+        // Connexion to MySQL
+        $err_level = error_reporting(0); 
+        $mysqli = new mysqli($mysql_host, $mysql_user, $mysql_pwd);
+        $err_level = error_reporting(0); 
+
+        //Check MySQL connection
+        if (mysqli_connect_errno()) {
+                $message = printf("Connection DB aborted : %s\n", mysqli_connect_error());
+                $colors->getColoredString("$message","red")."\n";
+                writelog($message, $logfile);
+                exit(2);
+        }
+
+        //Retrieve Schema list
+        $sql_listdb = "SHOW DATABASES;";
+        $query_listdb = $mysqli->query($sql_listdb);
+
+        mysqli_close($mysqli);
+
+        if (isset($dbg_sql)) {echo $colors->getColoredString("SQL : $sql_listdb","purple")."\n";}
+
+        // Parse schema list and save it
+        while ($row = $query_listdb->fetch_row()) {
+            $mysql_sch = (string)$row[0];
+
+            //DEBUG
+            if (isset($debug)) {echo $colors->getColoredString("MySQL Schema : $mysql_sch","green")."\n";}
+            //call save_process function
+            if (isset($debug)) {echo $colors->getColoredString("**Call save_process function **","yellow")."\n";}
+            save_process();
+        }
+       
+}
 
 //********************************************
 //               save_process
@@ -365,7 +443,9 @@ function save_process() {
 
 
 	// Connexion to MySQL
+        $err_level = error_reporting(0); 
 	$mysqli = new mysqli($mysql_host, $mysql_user, $mysql_pwd, $mysql_sch);
+        $err_level = error_reporting(0); 
 
 	//Check MySQL connection
 	if (mysqli_connect_errno()) {
@@ -647,11 +727,15 @@ function restore_process() {
 	if ($R_mysql_pwd == "") {
 		$mysql_restore = "$MYSQL -h'$R_mysql_host' -u'$R_mysql_user' $mysql_sch";
 		// Connexion to MySQL
+                $err_level = error_reporting(0);
         	$mysqli = new mysqli($R_mysql_host, $R_mysql_user, '', $mysql_sch);
+                error_reporting($err_level);
 	} else {
 		$mysql_restore = "$MYSQL -h'$R_mysql_host' -u'$R_mysql_user' -p'$R_mysql_pwd' $mysql_sch";
 		// Connexion to MySQL
+                $err_level = error_reporting(0);
                 $mysqli = new mysqli($R_mysql_host, $R_mysql_user, $R_mysql_pwd, $mysql_sch);
+                error_reporting($err_level);
 	}
         //Check MySQL connection
         if (mysqli_connect_errno()) {
@@ -907,8 +991,9 @@ Purpose :
 
 OPTIONS:
    -h      Show this message.
-   -b      MySQL Schema Name. (Mandatory)
+   -b      MySQL Schema Name. (Mandatory if option A is not specified)
    -i      Setting file with MySQL credentials. (Mandatory)
+   -A      Save all databases.
    -q      Query options for clause WHERE.
    -t      Table use in clause WHERE.
    -w      Clause WHERE options.
@@ -922,6 +1007,9 @@ OPTIONS:
    -L 	   List archive to get Timestamp. 
 
 Save process examples :
+        - Backup all databases
+$ php $script_name -A -i"$current_fld/backup_mysql_tbl.ini"
+
         - Backup database centreon
 $ php $script_name -b"centreon" -i"$current_fld/backup_mysql_tbl.ini"
 
