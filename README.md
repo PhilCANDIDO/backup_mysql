@@ -75,6 +75,7 @@ OPTIONS:
    -h      Show this message.
    -b      MySQL Schema Name. (Mandatory)
    -i      Setting file with MySQL credentials. (Mandatory)
+   -A      Save all databases.
    -q      Query options for clause WHERE.
    -t      Table use in clause WHERE.
    -w      Clause WHERE options.
@@ -88,6 +89,9 @@ OPTIONS:
    -L      List archive to get Timestamp.
 
 Save process examples :
+        - Backup all databases
+$ php backup_mysql_tbl.php -A -i"/opt/backup_mysql/backup_mysql_tbl.ini"
+
         - Backup database centreon
 $ php backup_mysql_tbl.php -b"centreon" -i"/opt/backup_mysql/backup_mysql_tbl.ini"
 
