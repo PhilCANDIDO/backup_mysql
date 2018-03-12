@@ -380,7 +380,8 @@ exit(0);
 function list_alldb() {
         // list variables
         global $debug, $colors, $dest_fld, $fld_dest_tbl, $time_start, $message, $logfile;
-        global $mysql_host, $mysql_user, $mysql_pwd, $mysql_port, $mysql_sch, $tbl_name;
+        global $mysql_host, $mysql_user, $mysql_pwd, $mysql_port, $mysql_sch, $tbl_name, $cent_sts;
+
 
         // Connexion to MySQL
 
@@ -688,7 +689,7 @@ function nsca() {
         global $bck_status, $dbg_sql;
 
         //Create nsca message
-        $nsca_cmd = "echo -e \"$cent_host;$cent_svc;$bck_status;$message\" | $SEND_NSCA -H $centengine -c $nsca_cfg -d ';'";
+        $nsca_cmd = "echo \"$cent_host;$cent_svc;$bck_status;$message\" | $SEND_NSCA -H $centengine -c $nsca_cfg -d ';'";
         if (isset($dbg_sql)) {echo $colors->getColoredString("NSCA MSG : $nsca_cmd","purple")."\n";}
 
         //Execute nsca command
@@ -697,7 +698,6 @@ function nsca() {
         //Search the string successfull
         if (strpos($nsca_rtr,'sent to host successfully') !== false) {
                 if (isset($debug)) {echo $colors->getColoredString("Backup status sent to centreon.","green")."\n";};
-                echo $nsca_rtr;
         } else {
                 echo $colors->getColoredString("CRITICAL : nsca message not send to CENTREON. Please check the following message.","red")."\n";
                 echo "  "."$nsca_rtr";
