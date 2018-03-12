@@ -689,7 +689,7 @@ function nsca() {
         global $bck_status, $dbg_sql;
 
         //Create nsca message
-        $nsca_cmd = "echo -e \"$cent_host;$cent_svc;$bck_status;$message\" | $SEND_NSCA $centengine -c $nsca_cfg -d ';'";
+        $nsca_cmd = "echo -e \"$cent_host;$cent_svc;$bck_status;$message\" | $SEND_NSCA -H $centengine -c $nsca_cfg -d ';'";
         if (isset($dbg_sql)) {echo $colors->getColoredString("NSCA MSG : $nsca_cmd","purple")."\n";}
 
         //Execute nsca command
