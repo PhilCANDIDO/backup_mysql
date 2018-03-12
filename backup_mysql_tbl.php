@@ -697,7 +697,7 @@ function nsca() {
         //Search the string successfull
         if (strpos($nsca_rtr,'sent to host successfully') !== false) {
                 if (isset($debug)) {echo $colors->getColoredString("Backup status sent to centreon.","green")."\n";};
-				echo $nsca_rtr
+                echo $nsca_rtr;
         } else {
                 echo $colors->getColoredString("CRITICAL : nsca message not send to CENTREON. Please check the following message.","red")."\n";
                 echo "  "."$nsca_rtr";
