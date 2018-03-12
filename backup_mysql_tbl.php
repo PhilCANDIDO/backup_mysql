@@ -1,3 +1,4 @@
+
 #!/usr/bin/php -q
 <?php
 //###################################################
@@ -173,6 +174,13 @@ if (isset($options['R'])) {
         } else {
                 echo $colors->getColoredString("CRITICAL: Argument -P is mandatory when use option -R. Script aborted. (see helpline $script_name -h)","red")."\n";
                 exit(2);
+        }
+        //Get MySQL restore port
+        if (isset($mysql_port)) {
+                $R_mysql_pwd = $mysql_port;
+        } else {
+                $R_mysql_pwd = 3306;
+                echo $colors->getColoredString("WARNING: Variable MySQL Port not found in ini file. Default value 3306 used.","red")."\n";
         }
         //Get archive timestamp
         if (isset($options['D'])) {
@@ -375,12 +383,12 @@ exit(0);
 function list_alldb() {
         // list variables
         global $debug, $colors, $dest_fld, $fld_dest_tbl, $time_start, $message, $logfile;
-        global $mysql_host, $mysql_user, $mysql_pwd, $mysql_sch, $tbl_name;
+        global $mysql_host, $mysql_user, $mysql_pwd, $mysql_port, $mysql_sch, $tbl_name;
 
         // Connexion to MySQL
 
         if (isset($dbg_sql)) {$err_level = error_reporting(0);}
-        $mysqli = new mysqli($mysql_host, $mysql_user, $mysql_pwd);
+        $mysqli = new mysqli($mysql_host, $mysql_user, $mysql_pwd, "mysql", $mysql_port);
         if (isset($dbg_sql)) {$err_level = error_reporting(0);}
 
         //Check MySQL connection
@@ -434,7 +442,7 @@ function list_alldb() {
 function save_process() {
         // list variables
         global $debug, $colors, $dest_fld, $fld_dest_tbl, $time_start, $message, $logfile;
-        global $mysql_host, $mysql_user, $mysql_pwd, $mysql_sch, $tbl_name;
+        global $mysql_host, $mysql_user, $mysql_pwd,$mysql_port, $mysql_sch, $tbl_name;
         global $DF, $TAIL, $AWK, $DU;
 
         //Create backup folder tree
@@ -450,7 +458,7 @@ function save_process() {
         // Connexion to MySQL
 
         if (isset($dbg_sql)) {$err_level = error_reporting(0);}
-        $mysqli = new mysqli($mysql_host, $mysql_user, $mysql_pwd, $mysql_sch);
+        $mysqli = new mysqli($mysql_host, $mysql_user, $mysql_pwd, $mysql_sch, $mysql_port);
         if (isset($dbg_sql)) {$err_level = error_reporting(0);}
 
         //Check MySQL connection
@@ -716,7 +724,7 @@ function nsca() {
 //********************************************
 
 function restore_process() {
-        global $mysql_sch, $R_mysql_host, $R_mysql_user, $R_mysql_pwd, $R_timestamp, $MYSQL, $BUNZIP2;
+        global $mysql_sch, $R_mysql_host, $R_mysql_user, $R_mysql_pwd, $R_mysql_port, $R_timestamp, $MYSQL, $BUNZIP2;
         global $dest_fld, $debug, $colors, $time_start;
 
         //Display message
@@ -731,16 +739,16 @@ function restore_process() {
 
         //Prepare mysql restore command
         if ($R_mysql_pwd == "") {
-                $mysql_restore = "$MYSQL -h'$R_mysql_host' -u'$R_mysql_user' $mysql_sch";
+                $mysql_restore = "$MYSQL -h'$R_mysql_host' -u'$R_mysql_user' -P '$R_mysql_port' $mysql_sch";
                 // Connexion to MySQL
                 if (isset($dbg_sql)) {$err_level = error_reporting(0);}
-                $mysqli = new mysqli($R_mysql_host, $R_mysql_user, '', $mysql_sch);
+                $mysqli = new mysqli($R_mysql_host, $R_mysql_user, '', $mysql_sch, $R_mysql_port);
                 if (isset($dbg_sql)) {error_reporting($err_level);}
         } else {
-                $mysql_restore = "$MYSQL -h'$R_mysql_host' -u'$R_mysql_user' -p'$R_mysql_pwd' $mysql_sch";
+                $mysql_restore = "$MYSQL -h'$R_mysql_host' -u'$R_mysql_user' -p'$R_mysql_pwd' -P'$R_mysql_port' $mysql_sch";
                 // Connexion to MySQL
                 if (isset($dbg_sql)) {$err_level = error_reporting(0);}
-                $mysqli = new mysqli($R_mysql_host, $R_mysql_user, $R_mysql_pwd, $mysql_sch);
+                $mysqli = new mysqli($R_mysql_host, $R_mysql_user, $R_mysql_pwd, $mysql_sch, $R_mysql_port);
                 if (isset($dbg_sql)) {error_reporting($err_level);}
         }
         //Check MySQL connection
