@@ -1,4 +1,3 @@
-
 #!/usr/bin/php -q
 <?php
 //###################################################
@@ -323,8 +322,6 @@ switch ($sav_rest_ps) {
                 //call save_process function
                 if (isset($debug)) {echo $colors->getColoredString("**Call list all databases function **","yellow")."\n";}
                 list_alldb();
-                //Send backup result to CENTREON
-                if ($cent_sts == 1) {nsca();}
                 break;
         case "save":
                 //call save_process function
@@ -416,6 +413,8 @@ function list_alldb() {
             //call save_process function
             if (isset($debug)) {echo $colors->getColoredString("**Call save_process function **","yellow")."\n";}
             save_process();
+            //Send backup result to CENTREON
+            if ($cent_sts == 1) {nsca();}
         }
 
 }
